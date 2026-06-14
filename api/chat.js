@@ -4,21 +4,23 @@ export default async function handler(req, res) {
   }
   try {
     const { prompt } = req.body;
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,   // Key 从环境变量读取，不暴露给前端
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
+    const r = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }
+    );
     const data = await r.json();
-    res.status(200).json(data);
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "（未获取到回复）";
+    res.status(200).json({ content: [{ type: "text", text }] });
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }
